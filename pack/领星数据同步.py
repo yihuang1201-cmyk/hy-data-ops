@@ -44,6 +44,11 @@ APP_SECRET = ""       # 领星开放平台 AppSecret
 
 DAYS = 15             # 滚动覆盖天数（口径已拍板：每天滚动 15 天）
 
+# 看板未开放的接收口在此登记：整段跳过（不拉不推），避免整批失败逐行重试浪费时间。
+# V28 未上线利润模块 → profit_daily 推送必被拒（报文格式错误）属预期，不是故障；
+# 下一版 profit_daily 上线后，把下面改成 SKIP_KINDS = set() 重跑一次，近 15 天自动补齐。
+SKIP_KINDS = {"profit_daily"}
+
 # 领星店铺 sid → 看板显示名；留空 {} 则用领星返回的店铺名
 STORE_NAME = {
     # "123456": "美国站",
@@ -575,6 +580,9 @@ def main():
     ]
     profit_rows_total, profit_calls, profit_fail = 0, 0, 0
     profit_days = days[:2] if dump_only else days
+    if "profit_daily" in SKIP_KINDS:
+        print("⤼ 订单利润：SKIP_KINDS 已登记跳过（V28 未开放利润接收口，属预期；下一版上线后清空 SKIP_KINDS 重跑补齐近 15 天）")
+        profit_days = []
     for day in profit_days:
         for dim, path in PROFIT_DIMS:
             try:
